@@ -137,13 +137,14 @@ fun Test(viewModel: MapViewModel) {
 fun BetterMap(viewModel: MapViewModel) {
     val context = LocalContext.current
 
-    var uiSettings by remember { mutableStateOf(MapUiSettings()) }
+    var uiSettings by remember { mutableStateOf(MapUiSettings(myLocationButtonEnabled = true)) }
     val properties by remember {
-        mutableStateOf(MapProperties(mapType = MapType.NORMAL))
+        mutableStateOf(
+            MapProperties(mapType = MapType.NORMAL, isMyLocationEnabled = true))
     }
-    val userLocation = LatLng(viewModel.userCurrentLat.value, viewModel.userCurrentLng.value)
+//    val userLocation = LatLng(viewModel.userCurrentLat.value, viewModel.userCurrentLng.value)
     val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(userLocation, 10f)
+//        position = CameraPosition.fromLatLngZoom(userLocation, 10f)
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -153,11 +154,11 @@ fun BetterMap(viewModel: MapViewModel) {
             properties = properties,
             uiSettings = uiSettings
         ) {
-            Marker(
-                state = MarkerState(position = userLocation),
-                title = "Hey Demi!!",
-                snippet = "This is where you are rn probably idk"
-            )
+//            Marker(
+//                state = MarkerState(position = userLocation),
+//                title = "Hey Demi!!",
+//                snippet = "This is where you are rn probably idk"
+//            )
         }
         Switch(
             checked = uiSettings.zoomControlsEnabled,
