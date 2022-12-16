@@ -2,12 +2,17 @@ package com.demioshin.runway
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
+import android.widget.ImageView
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -36,6 +41,7 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.maps.android.compose.*
+import kotlinx.coroutines.*
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MapViewModel>()
@@ -46,12 +52,11 @@ class MainActivity : ComponentActivity() {
                 modifier = Modifier.fillMaxSize(),
                 color = MaterialTheme.colors.background
             ) {
-                Test(viewModel = viewModel)
+                Map(viewModel = viewModel)
             }
         }
     }
 }
-
 
 @ExperimentalPermissionsApi
 @Composable
@@ -118,7 +123,7 @@ fun RequireLocationPermission(
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun Test(viewModel: MapViewModel) {
+fun Map(viewModel: MapViewModel) {
     val context = LocalContext.current
 
     RequireLocationPermission(navigateToSettingsScreen = {
@@ -129,6 +134,7 @@ fun Test(viewModel: MapViewModel) {
             )
         )
     }) {
+        viewModel.getLocation(context)
         BetterMap(viewModel = viewModel)
     }
 }
@@ -142,9 +148,10 @@ fun BetterMap(viewModel: MapViewModel) {
         mutableStateOf(
             MapProperties(mapType = MapType.NORMAL, isMyLocationEnabled = true))
     }
-//    val userLocation = LatLng(viewModel.userCurrentLat.value, viewModel.userCurrentLng.value)
+
+    val userLocation = LatLng(viewModel.userCurrentLat.value, viewModel.userCurrentLng.value)
     val cameraPositionState = rememberCameraPositionState {
-//        position = CameraPosition.fromLatLngZoom(userLocation, 10f)
+        position = CameraPosition.fromLatLngZoom(userLocation, 10f)
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -154,11 +161,11 @@ fun BetterMap(viewModel: MapViewModel) {
             properties = properties,
             uiSettings = uiSettings
         ) {
-//            Marker(
-//                state = MarkerState(position = userLocation),
-//                title = "Hey Demi!!",
-//                snippet = "This is where you are rn probably idk"
-//            )
+            Marker(
+                state = MarkerState(position = userLocation),
+                title = "Hey Demi!!",
+                snippet = "This is where you are rn probably idk"
+            )
         }
         Switch(
             checked = uiSettings.zoomControlsEnabled,
@@ -166,6 +173,7 @@ fun BetterMap(viewModel: MapViewModel) {
                 uiSettings = uiSettings.copy(zoomControlsEnabled = it)
             }
         )
+
     }
 
 }
