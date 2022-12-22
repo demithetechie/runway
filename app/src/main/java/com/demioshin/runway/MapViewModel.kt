@@ -7,6 +7,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -20,36 +21,35 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.OnTokenCanceledListener
 
 class MapViewModel: ViewModel() {
-    var userCurrentLng: MutableState<Double> = mutableStateOf(-1.158109)
-    var userCurrentLat: MutableState<Double> = mutableStateOf(52.954784)
+    var locationManager: LocationManager? = null
+    var mapState = mutableStateOf(MapData())
 
-    fun updateCurrentLocation(location: Location?) {
-        userCurrentLat = mutableStateOf(location?.latitude ?: 0.0)
-        userCurrentLat = mutableStateOf(location?.longitude ?: 0.0)
+    var currentLocation: LatLng? = null
 
+    fun setup(context: Context) {
+        locationManager = LocationManager(context)
+
+
+//        mapState.value.location = mutableStateOf(locationManager.currentLocation)
     }
 
-    @SuppressLint("MissingPermission")
-    fun getLocation(context: Context) {
-        val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
-        fusedLocationClient.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, object : CancellationToken() {
-            override fun onCanceledRequested(p0: OnTokenCanceledListener) = CancellationTokenSource().token
-
-            override fun isCancellationRequested() = false
-        })
-            .addOnSuccessListener { location: Location? ->
-                if (location == null)
-                    Toast.makeText(context, "Cannot get location.", Toast.LENGTH_SHORT).show()
-                else {
-                    val lat = location.latitude
-                    val lon = location.longitude
-                    Log.d("lat", lat.toString())
-                    Log.d("long", lon.toString())
-                    updateCurrentLocation(location)
-
-                }
-
-            }
+    fun setupLocationManager(context: Context) {
+        locationManager = LocationManager(context)
     }
+
+    fun startLocationUpdates() {
+        locationManager?.trackUserLocation()
+    }
+
+    fun stopLocationUpdates() {
+        locationManager?.stopTrackingUserLocation()
+    }
+
+//    fun getCurrentLocation(): LatLng {
+//        val lat = locationManager?.currentLocation?.value?.latitude
+//        val long = locationManager?.currentLocation?.value?.longitude
+//
+//        return LatLng(lat ?: 0.0, long ?: 0.0)
+//    }
 
 }

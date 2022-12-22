@@ -21,8 +21,12 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Color.Companion.Green
+import androidx.compose.ui.graphics.Color.Companion.Yellow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.tooling.preview.Preview
@@ -31,6 +35,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.MutableLiveData
 import com.demioshin.runway.ui.theme.RunwayTheme
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
@@ -45,6 +50,7 @@ import kotlinx.coroutines.*
 
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MapViewModel>()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -134,7 +140,6 @@ fun Map(viewModel: MapViewModel) {
             )
         )
     }) {
-        viewModel.getLocation(context)
         BetterMap(viewModel = viewModel)
     }
 }
@@ -143,16 +148,30 @@ fun Map(viewModel: MapViewModel) {
 fun BetterMap(viewModel: MapViewModel) {
     val context = LocalContext.current
 
-    var uiSettings by remember { mutableStateOf(MapUiSettings(myLocationButtonEnabled = true)) }
-    val properties by remember {
-        mutableStateOf(
-            MapProperties(mapType = MapType.NORMAL, isMyLocationEnabled = true))
+    viewModel.setupLocationManager(context)
+
+    val isVisible = true
+
+    val mapState by remember { viewModel.mapState }
+
+//    val receiver = object : BroadcastReceiver() {
+//        override fun onReceive(context: Context?, intent: Intent?) {
+//            if (intent?.action == "LOCATION_FOUND") {
+//
+//            }
+//        }
+//    }
+
+    val userLocation by viewModel.locationManager!!.currentLocation.observeAsState()
+
+    var uiSettings by remember { mapState.uiSettings }
+    val properties by remember { mapState.properties }
+
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(userLocation!!, 10f)
     }
 
-    val userLocation = LatLng(viewModel.userCurrentLat.value, viewModel.userCurrentLng.value)
-    val cameraPositionState = rememberCameraPositionState {
-        position = CameraPosition.fromLatLngZoom(userLocation, 10f)
-    }
+    viewModel.startLocationUpdates()
 
     Box(Modifier.fillMaxSize()) {
         GoogleMap(
@@ -161,10 +180,12 @@ fun BetterMap(viewModel: MapViewModel) {
             properties = properties,
             uiSettings = uiSettings
         ) {
-            Marker(
-                state = MarkerState(position = userLocation),
-                title = "Hey Demi!!",
-                snippet = "This is where you are rn probably idk"
+            Circle(
+                center = userLocation!!,
+                radius = 15.0,
+                fillColor = Green,
+                strokeColor = Green,
+                visible = isVisible
             )
         }
         Switch(
