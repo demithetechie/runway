@@ -1,4 +1,4 @@
-package com.demioshin.runway
+package com.demioshin.runway.services
 
 import android.annotation.SuppressLint
 import android.content.Context
@@ -8,26 +8,23 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.lifecycle.MutableLiveData
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.tasks.CancellationToken
 import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.OnTokenCanceledListener
-import com.google.maps.android.SphericalUtil
-import com.google.maps.android.compose.CameraPositionState
-import kotlin.math.roundToInt
 
 class LocationManager(context: Context) {
     private val client = LocationServices.getFusedLocationProviderClient(context)
 
     var currentLocation = MutableLiveData<LatLng>()
     var locations = mutableListOf<LatLng>()
+
+    private val isLocationNull = mutableStateOf(true)
 
     var liveLocations = MutableLiveData<List<LatLng>>()
 
@@ -48,11 +45,13 @@ class LocationManager(context: Context) {
             currentLocation.value = location
 
             locations.add(location)
+
+            liveLocations.value = locations
         }
     }
 
     @SuppressLint("MissingPermission")
-    fun getLocation() {
+    fun getLocation(context: Context) {
         client.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, object : CancellationToken() {
             override fun onCanceledRequested(p0: OnTokenCanceledListener) = CancellationTokenSource().token
 
@@ -60,7 +59,7 @@ class LocationManager(context: Context) {
         })
             .addOnSuccessListener { location: Location? ->
                 if (location == null)
-                    // Toast.makeText(context, "Cannot get location.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Cannot get location.", Toast.LENGTH_SHORT).show()
                 else {
                     val lat = location.latitude
                     val lon = location.longitude
@@ -68,9 +67,14 @@ class LocationManager(context: Context) {
                     Log.d("lat: ", lat.toString())
                     Log.d("long: ", lon.toString())
 
-                    val loc = MutableLiveData(LatLng(lat, lon))
+                    val loc = LatLng(lat, lon)
 
-                    currentLocation = loc
+                    currentLocation.value = loc
+
+                    isLocationNull.value = false
+
+                    val broadcastIntent = Intent("CURRENT_LOCATION_FOUND")
+                    context.sendBroadcast(broadcastIntent)
                 }
             }
     }
@@ -88,6 +92,5 @@ class LocationManager(context: Context) {
     fun stopTrackingUserLocation() {
         client.removeLocationUpdates(locationCallback)
     }
-
 
 }

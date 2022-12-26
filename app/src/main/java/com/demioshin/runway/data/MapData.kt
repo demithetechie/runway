@@ -1,4 +1,4 @@
-package com.demioshin.runway
+package com.demioshin.runway.data
 
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -11,7 +11,7 @@ data class MapData(
     val state: String = "START",
     val uiSettings: MutableState<MapUiSettings> = mutableStateOf(MapUiSettings(myLocationButtonEnabled = true)),
     val properties: MutableState<MapProperties> = mutableStateOf(
-        MapProperties(mapType = MapType.NORMAL)),
+        MapProperties(mapType = MapType.NORMAL, isMyLocationEnabled = true)),
     var location: LatLng = LatLng(0.0, 0.0)
     ) {
 

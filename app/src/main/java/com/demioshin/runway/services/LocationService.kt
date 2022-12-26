@@ -1,4 +1,4 @@
-package com.demioshin.runway
+package com.demioshin.runway.services
 
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
