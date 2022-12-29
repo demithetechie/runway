@@ -1,4 +1,4 @@
-package com.demioshin.runway.screens
+package com.demioshin.runway.ui
 
 import android.content.BroadcastReceiver
 import android.content.Context
