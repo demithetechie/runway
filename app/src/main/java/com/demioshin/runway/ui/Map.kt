@@ -7,17 +7,24 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.provider.Settings
 import android.view.View
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.demioshin.runway.R
+import com.demioshin.runway.ui.theme.backgroundColor2
 import com.demioshin.runway.util.rememberMapViewWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -88,6 +95,76 @@ fun Map(viewModel: MapViewModel) {
 
     context.registerReceiver(receiver, intentFilter)
 
+    if (isMapReady) {
+        Box {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize(),
+                contentAlignment = Alignment.BottomCenter
+            ) {
+                GoogleMap(
+                    cameraPositionState = cameraPositionState,
+                    properties = properties,
+                    uiSettings = uiSettings,
+                ) {
+                    Circle(
+                        center = userLocation!!,
+                        radius = 10.0,
+                        fillColor = Color.Green,
+                        strokeColor = Color.Green,
+                        visible = isVisible
+                    )
+                    if (locations != null) {
+                        Polyline(
+                            points = locations!!,
+                            jointType = JointType.ROUND,
+                            color = Color.Green,
+                        )
+                    }
+                }
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.Bottom,
+                ) {
+                    Button(onClick = {
+                        viewModel.startLocationUpdates()
+                    }) {
+                        Text(text = "Start Run")
+                    }
+                    Spacer(modifier = Modifier.width(width = 10.dp))
+                    Button(onClick = {
+                        viewModel.getCurrentLocation()
+
+                    }) {
+                        Text(text = "Locate")
+                    }
+                }
+            }
+            Box (
+                modifier = Modifier.background(color = backgroundColor2).fillMaxWidth()
+                    ) {
+                Column {
+                    Row{
+                        Icon(painter = painterResource(id = R.drawable.ic_baseline_access_time_24), "Time")
+                        Text("Time")
+                    }
+                    Row{
+                        Icon(painter = painterResource(id = R.drawable.ic_baseline_directions_run_24), "Steps")
+                        Text("Steps")
+                    }
+                    Row{
+                        Icon(painter = painterResource(id = R.drawable.ic_baseline_timeline_24), "Distance")
+                        Text("Distance")
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
 //    Box{
 //        AndroidView({ mapView }) { mapView ->
 //            CoroutineScope(Dispatchers.Main).launch {
@@ -115,51 +192,3 @@ fun Map(viewModel: MapViewModel) {
 //            Text(text = "End Run")
 //        }
 //    }
-
-
-    if (isMapReady) {
-        Box(
-            modifier = Modifier.fillMaxSize()
-        ) {
-            GoogleMap(
-                cameraPositionState = cameraPositionState,
-                properties = properties,
-                uiSettings = uiSettings,
-            ) {
-                Circle(
-                    center = userLocation!!,
-                    radius = 10.0,
-                    fillColor = Color.Green,
-                    strokeColor = Color.Green,
-                    visible = isVisible
-                )
-                if (locations != null) {
-                    Polyline(
-                        points = locations!!,
-                        jointType = JointType.ROUND,
-                        color = Color.Green,
-                    )
-                }
-            }
-        }
-        Row (
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.Bottom,
-        ) {
-            Button(onClick = {
-                viewModel.startLocationUpdates()
-            }) {
-                Text(text = "Start Run")
-            }
-            Spacer(modifier = Modifier.width(width = 10.dp))
-            Button(onClick = {
-                viewModel.getCurrentLocation()
-
-            }) {
-                Text(text = "Locate")
-            }
-        }
-    }
-}
-
-

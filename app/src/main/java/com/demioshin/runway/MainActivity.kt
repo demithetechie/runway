@@ -22,6 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -33,7 +35,11 @@ import com.demioshin.runway.util.rememberMapViewWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.CircleOptions
 import com.google.android.gms.maps.model.JointType
 import com.google.android.gms.maps.model.LatLng
 //import com.google.android.gms.maps.GoogleMap
@@ -44,8 +50,13 @@ import kotlinx.coroutines.*
 class MainActivity : ComponentActivity() {
     private val viewModel by viewModels<MapViewModel>()
 
+    private lateinit var mapView: MapView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        mapView = MapView(this)
+
         setContent {
             Surface(
                 modifier = Modifier.fillMaxSize(),
@@ -53,12 +64,33 @@ class MainActivity : ComponentActivity() {
             ) {
                 val navController = rememberNavController()
 
-                NavHost(navController = navController, startDestination = "start") {
+                NavHost(navController = navController, startDestination = "map") {
                     composable("map") { Map(viewModel) }
-                    composable("start") { StartScreen(navController = navController) }
+                    composable("start") {
+                        StartScreen(navController = navController)
+                    }
                 }
             }
         }
+
+//    @Composable
+//    fun NewMap(onMapReadyCallback: OnMapReadyCallback) {
+//        AndroidView(
+//            modifier = Modifier.fillMaxSize(), // Occupy the max size in the Compose UI tree
+//            factory = {
+//                mapView
+//            },
+//            update = {
+//                mapView.getMapAsync(onMapReadyCallback)
+//            }
+//        )
+//    }
+//
+//    override fun onMapReady(map: GoogleMap) {
+//        map.addCircle(CircleOptions().radius(300.0).center(LatLng(51.1, -1.0)))
+//        map.moveCamera(CameraUpdateFactory.newLatLng(LatLng(51.1, -1.0)))
+//    }
     }
 }
+
 

@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.demioshin.runway.ui.theme.Shapes
 import com.demioshin.runway.ui.theme.backgroundColor
 import com.demioshin.runway.ui.theme.buttonColor
 import com.demioshin.runway.ui.theme.mainFontColor
@@ -45,7 +46,7 @@ fun StartScreen(navController: NavController) {
                 modifier = Modifier
                     .width(350.dp)
                     .height(50.dp),
-                shape = RoundedCornerShape(40),
+                shape = Shapes.medium,
                 colors = ButtonDefaults.buttonColors(backgroundColor = buttonColor),
                 onClick = {
                     navController.navigate("map")
