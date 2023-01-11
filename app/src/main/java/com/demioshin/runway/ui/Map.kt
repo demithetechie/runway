@@ -70,8 +70,6 @@ fun Map(viewModel: MapViewModel) {
     val mapView = rememberMapViewWithLifecycle()
     mapView.visibility = View.GONE
 
-    var runText = "Start Run"
-
     val mapState by remember { viewModel.mapState }
 
     var isMapReady by remember { mutableStateOf(false) }
@@ -82,7 +80,7 @@ fun Map(viewModel: MapViewModel) {
 
     val time by viewModel.runData.value.time.observeAsState()
     val steps by viewModel.stepsManager!!.steps.observeAsState()
-    val distance by viewModel.runData.value.distance.observeAsState()
+    val distance by viewModel.locationManager!!.distance.observeAsState()
 
     val uiSettings by remember { mapState.uiSettings }
     val properties by remember { mapState.properties }

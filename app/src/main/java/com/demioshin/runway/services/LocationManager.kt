@@ -23,6 +23,7 @@ class LocationManager(context: Context) {
 
     var currentLocation = MutableLiveData<LatLng>()
     var locations = mutableListOf<LatLng>()
+    var distance = MutableLiveData<Float>()
 
     private val isLocationNull = mutableStateOf(true)
 
@@ -37,14 +38,38 @@ class LocationManager(context: Context) {
             val lat = result.lastLocation?.latitude
             val long = result.lastLocation?.longitude
 
-            Log.d("new lat: ", result.lastLocation?.latitude.toString())
-            Log.d("new long: ", result.lastLocation?.longitude.toString())
+//            Log.d("new lat: ", result.lastLocation?.latitude.toString())
+//            Log.d("new long: ", result.lastLocation?.longitude.toString())
 
             val location = LatLng(lat!!, long!!)
 
             currentLocation.value = location
 
             locations.add(location)
+
+            if (locations.size > 1) {
+                val location1 = Location("prov")
+                location1.longitude = location.longitude
+                location1.latitude = location.latitude
+
+                Log.d("Location 1", "lat: ${location1.latitude}, long:  ${location1.longitude}")
+
+                val location2 = Location("prov1")
+                location2.longitude = locations[locations.size - 2].longitude
+                location2.latitude = locations[locations.size - 2].latitude
+
+                Log.d("Location 2", "lat: ${location2.latitude}, long:  ${location2.longitude}")
+
+                val newDistance = location1.distanceTo(location2)
+
+                Log.d("distance update", "The distance increment is $newDistance")
+
+                val currentDistance = distance.value
+
+                distance.value = distance.value!!.plus(newDistance)
+
+                Log.d("distance", "The final distance is $currentDistance")
+            }
 
             liveLocations.value = locations
         }
@@ -64,14 +89,16 @@ class LocationManager(context: Context) {
                     val lat = location.latitude
                     val lon = location.longitude
 
-                    Log.d("lat: ", lat.toString())
-                    Log.d("long: ", lon.toString())
+                    Log.d("current lat: ", lat.toString())
+                    Log.d("current long: ", lon.toString())
 
                     val loc = LatLng(lat, lon)
 
                     currentLocation.value = loc
 
                     isLocationNull.value = false
+
+                    distance.value = 0F
 
                     val broadcastIntent = Intent("CURRENT_LOCATION_FOUND")
                     context.sendBroadcast(broadcastIntent)
@@ -81,7 +108,7 @@ class LocationManager(context: Context) {
 
     @SuppressLint("MissingPermission")
     fun trackUserLocation() {
-        val locationRequest = LocationRequest.Builder(3000)
+        val locationRequest = LocationRequest.Builder(2000)
             .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
             .setMinUpdateIntervalMillis(1500)
             .build()
@@ -91,6 +118,7 @@ class LocationManager(context: Context) {
 
     fun stopTrackingUserLocation() {
         client.removeLocationUpdates(locationCallback)
+
     }
 
 }

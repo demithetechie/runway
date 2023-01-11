@@ -10,7 +10,7 @@ import androidx.lifecycle.MutableLiveData
 
 class StepsManager(context: Context) : SensorEventListener {
 
-    val steps = MutableLiveData<Int>()
+    val steps = MutableLiveData<Int>(0)
     private var sensorManager: SensorManager? = null
     private var stepSensor: Sensor? = null
 

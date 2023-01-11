@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.SystemClock
+import android.util.Log
 import android.widget.Chronometer
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
@@ -65,24 +66,29 @@ class MapViewModel: ViewModel() {
         mapState.value.state = STOPPED
 
         locationManager?.stopTrackingUserLocation()
-
     }
 
     fun getCurrentLocation(): LatLng {
         return locationManager?.currentLocation?.value!!
     }
 
-    fun startTimer() {
+    private fun startTimer() {
         var startTime = 0
         Thread {
-            while (mapState.value.state == RUNNING) {
+            while (true) {
                 Thread.sleep(1000L)
                 startTime++
                 val hours: Int = startTime / 3600
                 val minutes: Int = startTime / 60
                 val seconds: Int = startTime % 60
 
+                Log.d("time", "the time is $startTime seconds")
+
                 runData.value.time.postValue(Time(hours, minutes, seconds))
+
+                if (mapState.value.state == STOPPED) {
+                    return@Thread
+                }
             }
         }.start()
     }

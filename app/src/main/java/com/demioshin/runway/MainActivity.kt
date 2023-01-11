@@ -64,8 +64,8 @@ class MainActivity : ComponentActivity() {
             ) {
                 val navController = rememberNavController()
 
-                NavHost(navController = navController, startDestination = "map") {
-                    composable("map") { Map(viewModel) }
+                NavHost(navController = navController, startDestination = "start") {
+                    composable("map") { MapSetup(viewModel, navController) }
                     composable("start") {
                         StartScreen(navController = navController)
                     }
