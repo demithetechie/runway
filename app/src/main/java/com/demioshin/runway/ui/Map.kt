@@ -7,6 +7,7 @@ import android.content.IntentFilter
 import android.net.Uri
 import android.provider.Settings
 import android.view.View
+import android.widget.Chronometer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
@@ -35,6 +36,13 @@ import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
+import com.demioshin.runway.data.mapState.RUNNING
+import com.demioshin.runway.data.mapState.STOPPED
+import com.demioshin.runway.data.mapState.READY
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
+import java.sql.Time
+import kotlin.concurrent.thread
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -62,15 +70,19 @@ fun Map(viewModel: MapViewModel) {
     val mapView = rememberMapViewWithLifecycle()
     mapView.visibility = View.GONE
 
+    var runText = "Start Run"
+
     val mapState by remember { viewModel.mapState }
 
     var isMapReady by remember { mutableStateOf(false) }
-
     var isVisible by remember { mutableStateOf(false) }
 
     val userLocation by viewModel.locationManager!!.currentLocation.observeAsState()
-
     val locations by viewModel.locationManager!!.liveLocations.observeAsState()
+
+    val time by viewModel.runData.value.time.observeAsState()
+    val steps by viewModel.stepsManager!!.steps.observeAsState()
+    val distance by viewModel.runData.value.distance.observeAsState()
 
     val uiSettings by remember { mapState.uiSettings }
     val properties by remember { mapState.properties }
@@ -88,7 +100,9 @@ fun Map(viewModel: MapViewModel) {
                 isMapReady = true
                 isVisible = true
 
-                cameraPositionState.move(CameraUpdateFactory.newLatLng(viewModel.getCurrentLocation()))
+                mapState.state = READY
+
+                cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(viewModel.getCurrentLocation(), 17f))
             }
         }
     }
@@ -96,10 +110,28 @@ fun Map(viewModel: MapViewModel) {
     context.registerReceiver(receiver, intentFilter)
 
     if (isMapReady) {
-        Box {
+        Column {
+            Box (
+                modifier = Modifier.background(color = backgroundColor2).fillMaxWidth().padding(paddingValues = PaddingValues(10.dp))
+            ) {
+                Column {
+                    Row{
+                        Icon(painter = painterResource(id = R.drawable.ic_baseline_access_time_24), "Time")
+                        Text("Time: $time")
+                    }
+                    Row{
+                        Icon(painter = painterResource(id = R.drawable.ic_baseline_directions_run_24), "Steps")
+                        Text("Steps: $steps")
+                    }
+                    Row{
+                        Icon(painter = painterResource(id = R.drawable.ic_baseline_timeline_24), "Distance")
+                        Text("Distance: $distance metres")
+                    }
+                }
+            }
             Box(
                 modifier = Modifier
-                    .fillMaxSize(),
+                    .fillMaxWidth().fillMaxHeight(),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 GoogleMap(
@@ -109,7 +141,7 @@ fun Map(viewModel: MapViewModel) {
                 ) {
                     Circle(
                         center = userLocation!!,
-                        radius = 10.0,
+                        radius = 0.3,
                         fillColor = Color.Green,
                         strokeColor = Color.Green,
                         visible = isVisible
@@ -130,40 +162,19 @@ fun Map(viewModel: MapViewModel) {
                     Button(onClick = {
                         viewModel.startLocationUpdates()
                     }) {
-                        Text(text = "Start Run")
+                        Text(text = "Start")
                     }
                     Spacer(modifier = Modifier.width(width = 10.dp))
                     Button(onClick = {
-                        viewModel.getCurrentLocation()
-
+                        viewModel.stopLocationUpdates()
                     }) {
-                        Text(text = "Locate")
-                    }
-                }
-            }
-            Box (
-                modifier = Modifier.background(color = backgroundColor2).fillMaxWidth()
-                    ) {
-                Column {
-                    Row{
-                        Icon(painter = painterResource(id = R.drawable.ic_baseline_access_time_24), "Time")
-                        Text("Time")
-                    }
-                    Row{
-                        Icon(painter = painterResource(id = R.drawable.ic_baseline_directions_run_24), "Steps")
-                        Text("Steps")
-                    }
-                    Row{
-                        Icon(painter = painterResource(id = R.drawable.ic_baseline_timeline_24), "Distance")
-                        Text("Distance")
+                        Text(text = "Stop")
                     }
                 }
             }
         }
     }
 }
-
-
 
 //    Box{
 //        AndroidView({ mapView }) { mapView ->
