@@ -9,6 +9,7 @@
     <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION"/>
 
     <application
+        android:name=".data.RunApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -37,5 +38,7 @@
             android:value="${MAPS_API_KEY}" />
         <uses-library android:name="org.apache.http.legacy" android:required="false" />
     </application>
+
+
 
 </manifest>

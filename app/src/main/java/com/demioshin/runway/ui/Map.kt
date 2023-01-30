@@ -6,8 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.net.Uri
 import android.provider.Settings
-import android.view.View
-import android.widget.Chronometer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.Button
@@ -18,15 +16,13 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.demioshin.runway.R
+import com.demioshin.runway.data.RunViewModel
 import com.demioshin.runway.ui.theme.backgroundColor2
-import com.demioshin.runway.util.rememberMapViewWithLifecycle
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.model.CameraPosition
@@ -36,13 +32,8 @@ import com.google.maps.android.compose.Circle
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Polyline
 import com.google.maps.android.compose.rememberCameraPositionState
-import com.demioshin.runway.data.mapState.RUNNING
-import com.demioshin.runway.data.mapState.STOPPED
 import com.demioshin.runway.data.mapState.READY
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.runBlocking
-import java.sql.Time
-import kotlin.concurrent.thread
+import com.google.android.gms.maps.MapsInitializer
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
@@ -57,34 +48,32 @@ fun MapSetup(viewModel: MapViewModel, navController: NavController) {
             )
         )
     }) {
-        Map(viewModel = viewModel)
+        Map(viewModel = viewModel, navController)
     }
 }
 
 @Composable
-fun Map(viewModel: MapViewModel) {
+fun Map(viewModel: MapViewModel, navController: NavController) {
     val context = LocalContext.current
 
     viewModel.setup(context)
 
-    val mapView = rememberMapViewWithLifecycle()
-    mapView.visibility = View.GONE
+    // setup map components
+    MapsInitializer.initialize(context)
 
     val mapState by remember { viewModel.mapState }
 
     var isMapReady by remember { mutableStateOf(false) }
     var isVisible by remember { mutableStateOf(false) }
 
-    val userLocation by viewModel.locationManager!!.currentLocation.observeAsState()
-    val locations by viewModel.locationManager!!.liveLocations.observeAsState()
-
+    // observe live run data
     val time by viewModel.runData.value.time.observeAsState()
-    val steps by viewModel.stepsManager!!.steps.observeAsState()
-    val distance by viewModel.locationManager!!.distance.observeAsState()
 
+    // store uiSettings and properties
     val uiSettings by remember { mapState.uiSettings }
     val properties by remember { mapState.properties }
 
+    // store cameraPositionState
     val cameraPositionState = rememberCameraPositionState {
         position = CameraPosition.fromLatLngZoom(LatLng(0.0, 0.0), 10f)
     }
@@ -100,36 +89,41 @@ fun Map(viewModel: MapViewModel) {
 
                 mapState.state = READY
 
-                cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(viewModel.getCurrentLocation(), 17f))
+                cameraPositionState.move(
+                    CameraUpdateFactory.newLatLngZoom(
+                        viewModel.getCurrentLocation(),
+                        17f
+                    )
+                )
             }
         }
     }
 
+    // register the broadcast receiver
     context.registerReceiver(receiver, intentFilter)
 
     if (isMapReady) {
         Column {
-            Box (
-                modifier = Modifier.background(color = backgroundColor2).fillMaxWidth().padding(paddingValues = PaddingValues(10.dp))
+            Box(
+                modifier = Modifier
+                    .background(color = backgroundColor2)
+                    .fillMaxWidth()
+                    .padding(paddingValues = PaddingValues(10.dp))
             ) {
                 Column {
-                    Row{
-                        Icon(painter = painterResource(id = R.drawable.ic_baseline_access_time_24), "Time")
+                    Row {
+                        Icon(
+                            painter = painterResource(id = R.drawable.ic_baseline_access_time_24),
+                            "Time"
+                        )
                         Text("Time: $time")
-                    }
-                    Row{
-                        Icon(painter = painterResource(id = R.drawable.ic_baseline_directions_run_24), "Steps")
-                        Text("Steps: $steps")
-                    }
-                    Row{
-                        Icon(painter = painterResource(id = R.drawable.ic_baseline_timeline_24), "Distance")
-                        Text("Distance: $distance metres")
                     }
                 }
             }
             Box(
                 modifier = Modifier
-                    .fillMaxWidth().fillMaxHeight(),
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
                 contentAlignment = Alignment.BottomCenter
             ) {
                 GoogleMap(
@@ -137,22 +131,9 @@ fun Map(viewModel: MapViewModel) {
                     properties = properties,
                     uiSettings = uiSettings,
                 ) {
-                    Circle(
-                        center = userLocation!!,
-                        radius = 0.3,
-                        fillColor = Color.Green,
-                        strokeColor = Color.Green,
-                        visible = isVisible
-                    )
-                    if (locations != null) {
-                        Polyline(
-                            points = locations!!,
-                            jointType = JointType.ROUND,
-                            color = Color.Green,
-                        )
-                    }
+
                 }
-                Row (
+                Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.Bottom,
@@ -165,6 +146,8 @@ fun Map(viewModel: MapViewModel) {
                     Spacer(modifier = Modifier.width(width = 10.dp))
                     Button(onClick = {
                         viewModel.stopLocationUpdates()
+
+                        navController.navigate("endRun")
                     }) {
                         Text(text = "Stop")
                     }
@@ -174,30 +157,3 @@ fun Map(viewModel: MapViewModel) {
     }
 }
 
-//    Box{
-//        AndroidView({ mapView }) { mapView ->
-//            CoroutineScope(Dispatchers.Main).launch {
-//                mapView.getMapAsync {
-//                    map = it
-//                    isMapReady.value = true
-//
-//                    map!!.uiSettings.isZoomControlsEnabled = true
-//                    map!!.mapType = MAP_TYPE_NORMAL
-//                }
-//            }
-//        }
-//    }
-//    Row {
-//        Button(onClick = {
-//            viewModel.startLocationUpdates()
-//        }) {
-//            Text(text = "Start Run")
-//        }
-//        Spacer(modifier = Modifier.width(width = 10.dp))
-//        Button(onClick = {
-//            viewModel.getCurrentLocation()
-//
-//        }) {
-//            Text(text = "End Run")
-//        }
-//    }

@@ -12,8 +12,8 @@ import java.sql.Time
 import java.util.Timer
 import kotlin.concurrent.thread
 
+// run data class
 class RunData {
     var time = MutableLiveData<Time>(Time(0, 0, 0))
-    var steps = MutableLiveData<Int>(0)
-    var distance = MutableLiveData<Float>(0F)
+    var distance = MutableLiveData<Int>(0)
 }

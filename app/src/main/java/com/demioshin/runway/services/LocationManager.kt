@@ -19,11 +19,15 @@ import com.google.android.gms.tasks.CancellationTokenSource
 import com.google.android.gms.tasks.OnTokenCanceledListener
 
 class LocationManager(context: Context) {
+    // client for getting current location
     private val client = LocationServices.getFusedLocationProviderClient(context)
 
+    // current location
     var currentLocation = MutableLiveData<LatLng>()
     var locations = mutableListOf<LatLng>()
-    var distance = MutableLiveData<Float>()
+    var liveDistance = MutableLiveData<Int>()
+
+    private var distance = 0
 
     private val isLocationNull = mutableStateOf(true)
 
@@ -33,6 +37,7 @@ class LocationManager(context: Context) {
         currentLocation.value = LatLng(0.0, 0.0)
     }
 
+    // location callback for location requests
     private val locationCallback = object : LocationCallback() {
         override fun onLocationResult(result: LocationResult) {
             val lat = result.lastLocation?.latitude
@@ -47,34 +52,38 @@ class LocationManager(context: Context) {
 
             locations.add(location)
 
+            liveLocations.value = locations
+
             if (locations.size > 1) {
+                // get new location
                 val location1 = Location("prov")
                 location1.longitude = location.longitude
                 location1.latitude = location.latitude
 
-                Log.d("Location 1", "lat: ${location1.latitude}, long:  ${location1.longitude}")
+                // Log.d("Location 1", "lat: ${location1.latitude}, long:  ${location1.longitude}")
 
+                // get previous location
                 val location2 = Location("prov1")
                 location2.longitude = locations[locations.size - 2].longitude
                 location2.latitude = locations[locations.size - 2].latitude
 
-                Log.d("Location 2", "lat: ${location2.latitude}, long:  ${location2.longitude}")
+                // Log.d("Location 2", "lat: ${location2.latitude}, long:  ${location2.longitude}")
 
+                // get distance change
                 val newDistance = location1.distanceTo(location2)
 
-                Log.d("distance update", "The distance increment is $newDistance")
+                // Log.d("distance update", "The distance increment is $newDistance")
 
-                val currentDistance = distance.value
+                distance += newDistance.toInt()
 
-                distance.value = distance.value!!.plus(newDistance)
+                // Log.d("distance", "The final distance is $distance")
 
-                Log.d("distance", "The final distance is $currentDistance")
+                liveDistance.postValue(distance)
             }
-
-            liveLocations.value = locations
         }
     }
 
+    // get location when setting up map
     @SuppressLint("MissingPermission")
     fun getLocation(context: Context) {
         client.getCurrentLocation(LocationRequest.PRIORITY_HIGH_ACCURACY, object : CancellationToken() {
@@ -98,7 +107,7 @@ class LocationManager(context: Context) {
 
                     isLocationNull.value = false
 
-                    distance.value = 0F
+                    liveDistance.value = distance
 
                     val broadcastIntent = Intent("CURRENT_LOCATION_FOUND")
                     context.sendBroadcast(broadcastIntent)
@@ -106,6 +115,7 @@ class LocationManager(context: Context) {
             }
     }
 
+    // start location updates
     @SuppressLint("MissingPermission")
     fun trackUserLocation() {
         val locationRequest = LocationRequest.Builder(2000)
@@ -116,6 +126,7 @@ class LocationManager(context: Context) {
         client.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
     }
 
+    // stop location updates
     fun stopTrackingUserLocation() {
         client.removeLocationUpdates(locationCallback)
 

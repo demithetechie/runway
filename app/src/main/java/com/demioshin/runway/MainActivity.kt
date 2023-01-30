@@ -12,6 +12,8 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -19,19 +21,27 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color.Companion.Green
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Devices
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.demioshin.runway.ui.Map
-import com.demioshin.runway.ui.MapSetup
-import com.demioshin.runway.ui.MapViewModel
-import com.demioshin.runway.ui.StartScreen
-import com.demioshin.runway.util.rememberMapViewWithLifecycle
+import com.demioshin.runway.data.Run
+import com.demioshin.runway.data.RunApplication
+import com.demioshin.runway.data.RunViewModel
+import com.demioshin.runway.data.RunViewModelFactory
+import com.demioshin.runway.ui.*
+import com.demioshin.runway.ui.theme.backgroundColor
+import com.demioshin.runway.ui.theme.backgroundColor2
+import com.demioshin.runway.ui.theme.buttonColor
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -48,14 +58,16 @@ import com.google.maps.android.compose.*
 import kotlinx.coroutines.*
 
 class MainActivity : ComponentActivity() {
-    private val viewModel by viewModels<MapViewModel>()
+    // map view model
+    private val mapViewModel by viewModels<MapViewModel>()
 
-    private lateinit var mapView: MapView
+    // run db view model
+    private val runViewModel: RunViewModel by viewModels {
+        RunViewModelFactory((application as RunApplication).repository)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        mapView = MapView(this)
 
         setContent {
             Surface(
@@ -65,32 +77,15 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
 
                 NavHost(navController = navController, startDestination = "start") {
-                    composable("map") { MapSetup(viewModel, navController) }
+                    composable("map") { MapSetup(mapViewModel, navController) }
                     composable("start") {
                         StartScreen(navController = navController)
                     }
+                    composable("runs") { listOfRuns(runViewModel, navController)}
+                    composable("endRun") { EndRunScreen(navController, runViewModel, mapViewModel)}
                 }
             }
         }
-
-//    @Composable
-//    fun NewMap(onMapReadyCallback: OnMapReadyCallback) {
-//        AndroidView(
-//            modifier = Modifier.fillMaxSize(), // Occupy the max size in the Compose UI tree
-//            factory = {
-//                mapView
-//            },
-//            update = {
-//                mapView.getMapAsync(onMapReadyCallback)
-//            }
-//        )
-//    }
-//
-//    override fun onMapReady(map: GoogleMap) {
-//        map.addCircle(CircleOptions().radius(300.0).center(LatLng(51.1, -1.0)))
-//        map.moveCamera(CameraUpdateFactory.newLatLng(LatLng(51.1, -1.0)))
-//    }
     }
 }
-
 

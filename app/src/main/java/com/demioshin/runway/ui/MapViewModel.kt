@@ -4,11 +4,8 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.os.SystemClock
 import android.util.Log
-import android.widget.Chronometer
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.ViewModel
 import com.demioshin.runway.data.MapData
 import com.demioshin.runway.data.RunData
@@ -16,8 +13,6 @@ import com.demioshin.runway.services.LocationManager
 import com.google.android.gms.maps.model.LatLng
 import com.demioshin.runway.data.mapState.RUNNING
 import com.demioshin.runway.data.mapState.STOPPED
-import com.demioshin.runway.data.mapState.READY
-import com.demioshin.runway.services.StepsManager
 import java.sql.Time
 
 
@@ -26,7 +21,6 @@ class MapViewModel: ViewModel() {
     var mapState = mutableStateOf(MapData())
     var runData = mutableStateOf(RunData())
     var location = mutableStateOf(LatLng(0.0, 0.0))
-    var stepsManager: StepsManager? = null
 
     private val receiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context?, intent: Intent?) {
@@ -47,7 +41,6 @@ class MapViewModel: ViewModel() {
         intentFilter.addAction("CURRENT_LOCATION_FOUND")
 
         locationManager = LocationManager(context)
-        stepsManager = StepsManager(context)
 
         locationManager!!.getLocation(context)
 
@@ -64,6 +57,8 @@ class MapViewModel: ViewModel() {
 
     fun stopLocationUpdates() {
         mapState.value.state = STOPPED
+
+        runData.value.distance = locationManager!!.liveDistance
 
         locationManager?.stopTrackingUserLocation()
     }
